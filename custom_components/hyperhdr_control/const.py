@@ -1,6 +1,7 @@
 """Constants for the HyperHDR Control integration."""
 
 DOMAIN = "hyperhdr_control"
+DEFAULT_PORT = 8090
 
 AVAILABLE_EFFECTS = [
     "Atomic Swirl",

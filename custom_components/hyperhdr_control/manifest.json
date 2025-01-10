@@ -4,9 +4,10 @@
   "documentation": "https://github.com/johnneerdael/hyperhdr_control",
   "dependencies": [],
   "codeowners": [],
-  "requirements": ["aiohttp"],
+  "requirements": ["aiohttp", "zeroconf"],
   "iot_class": "local_polling",
   "version": "1.1.0",
   "config_flow": true,
-  "logo": "images/logo.png"
+  "zeroconf": ["_hyperhdr-http._tcp.local."],
+  "logo": "https://raw.githubusercontent.com/johnneerdael/hyperhdr_control/main/hyperhdr_control-logo.png"
 } 

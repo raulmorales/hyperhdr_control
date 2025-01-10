@@ -7,13 +7,18 @@
                     "host": "Host",
                     "port": "Port"
                 }
+            },
+            "confirm": {
+                "title": "Confirm HyperHDR Discovery",
+                "description": "Do you want to add HyperHDR {name} at {host}:{port} to Home Assistant?"
             }
         },
         "error": {
             "cannot_connect": "Failed to connect to HyperHDR server"
         },
         "abort": {
-            "already_configured": "Device is already configured"
+            "already_configured": "Device is already configured",
+            "cannot_connect": "Failed to connect to HyperHDR server"
         }
     }
 } 
