@@ -65,7 +65,7 @@ class HyperHDRBrightnessNumber(NumberEntity):
             manufacturer="HyperHDR",
             name=f"HyperHDR ({self._host})",
             model="HyperHDR LED Controller",
-            sw_version="1.3.2",
+            sw_version="1.3.3",
         )
 
     @property

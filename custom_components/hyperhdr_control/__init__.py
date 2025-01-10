@@ -32,7 +32,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         manufacturer="HyperHDR",
         name=f"HyperHDR ({entry.data[CONF_HOST]})",
         model="HyperHDR LED Controller",
-        sw_version="1.3.2",
+        sw_version="1.3.3",
     )
 
     # Set up all platforms
