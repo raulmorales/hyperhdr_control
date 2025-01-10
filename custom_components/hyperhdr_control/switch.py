@@ -53,7 +53,7 @@ class HyperHDRSwitch(SwitchEntity):
             manufacturer="HyperHDR",
             name=f"HyperHDR ({self._host})",
             model="HyperHDR LED Controller",
-            sw_version="1.1.0",
+            sw_version="1.2.0",
         )
 
     async def async_turn_on(self, **kwargs: Any) -> None:
