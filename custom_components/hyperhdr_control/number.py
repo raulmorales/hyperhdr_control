@@ -50,6 +50,8 @@ class HyperHDRBrightnessNumber(NumberEntity):
         self._attr_native_step = 1
         self._attr_mode = NumberMode.SLIDER
         self._attr_native_unit_of_measurement = PERCENTAGE
+        self._attr_native_value = 100  # Set initial value
+        self._attr_available = True  # Explicitly set availability
         self._last_update = datetime.min
         self._pending_value = None
         self._update_lock = asyncio.Lock()
@@ -63,8 +65,13 @@ class HyperHDRBrightnessNumber(NumberEntity):
             manufacturer="HyperHDR",
             name=f"HyperHDR ({self._host})",
             model="HyperHDR LED Controller",
-            sw_version="1.3.1",
+            sw_version="1.3.2",
         )
+
+    @property
+    def available(self) -> bool:
+        """Return if entity is available."""
+        return self._attr_available
 
     async def _delayed_update(self) -> None:
         """Handle the delayed update of the brightness value."""
@@ -111,11 +118,15 @@ class HyperHDRBrightnessNumber(NumberEntity):
                 
                 async with async_timeout.timeout(10):
                     async with session.get(url, params=params) as response:
-                        if response.status != 200:
+                        if response.status == 200:
+                            self._attr_available = True
+                        else:
+                            self._attr_available = False
                             _LOGGER.error("Failed to set brightness: %s", response.status)
                             response_text = await response.text()
                             _LOGGER.error("Response: %s", response_text)
         except (aiohttp.ClientError, TimeoutError) as error:
+            self._attr_available = False
             _LOGGER.error("Error setting brightness: %s", error)
 
     async def async_update(self) -> None:
@@ -133,7 +144,18 @@ class HyperHDRBrightnessNumber(NumberEntity):
                     async with session.get(url, params=params) as response:
                         if response.status == 200:
                             data = await response.json()
-                            adjustment = data.get("info", {}).get("adjustment", {})
-                            self._attr_native_value = float(adjustment.get("brightness", 100))
+                            _LOGGER.debug("Received serverinfo response: %s", data)
+                            
+                            # Find the brightness in the adjustment array
+                            adjustments = data.get("info", {}).get("adjustment", [])
+                            if isinstance(adjustments, list) and adjustments:
+                                # Take the first adjustment's brightness value
+                                brightness = adjustments[0].get("brightness", 100)
+                                self._attr_native_value = float(brightness)
+                            
+                            self._attr_available = True
+                        else:
+                            self._attr_available = False
         except (aiohttp.ClientError, TimeoutError) as error:
+            self._attr_available = False
             _LOGGER.error("Error updating brightness: %s", error) 

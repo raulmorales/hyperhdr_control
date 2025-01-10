@@ -5,10 +5,16 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.const import CONF_HOST, CONF_PORT, Platform
 from homeassistant.helpers import device_registry as dr
+import asyncio
 
 from .const import DOMAIN
 
-PLATFORMS: list[Platform] = [Platform.SWITCH, Platform.BUTTON, Platform.NUMBER]
+# Define platforms to load
+PLATFORMS = [
+    Platform.SWITCH,
+    Platform.BUTTON,
+    Platform.NUMBER,
+]
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up HyperHDR Control from a config entry."""
@@ -26,15 +32,29 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         manufacturer="HyperHDR",
         name=f"HyperHDR ({entry.data[CONF_HOST]})",
         model="HyperHDR LED Controller",
-        sw_version="1.3.1",
+        sw_version="1.3.2",
     )
 
-    await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
+    # Set up all platforms
+    for platform in PLATFORMS:
+        hass.async_create_task(
+            hass.config_entries.async_forward_entry_setup(entry, platform)
+        )
+
     return True
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Unload a config entry."""
-    unload_ok = await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
+    unload_ok = all(
+        await asyncio.gather(
+            *[
+                hass.config_entries.async_forward_entry_unload(entry, platform)
+                for platform in PLATFORMS
+            ]
+        )
+    )
+    
     if unload_ok:
         hass.data[DOMAIN].pop(entry.entry_id)
+
     return unload_ok 
