@@ -7,5 +7,6 @@
   "requirements": ["aiohttp"],
   "iot_class": "local_polling",
   "version": "1.1.0",
-  "config_flow": true
+  "config_flow": true,
+  "logo": "images/logo.png"
 } 
