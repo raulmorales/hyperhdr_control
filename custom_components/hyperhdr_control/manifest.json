@@ -1,0 +1,11 @@
+{
+  "domain": "hyperhdr_control",
+  "name": "HyperHDR Control",
+  "documentation": "https://github.com/johnneerdael/hyperhdr_control",
+  "dependencies": [],
+  "codeowners": [],
+  "requirements": ["aiohttp"],
+  "iot_class": "local_polling",
+  "version": "1.0.0",
+  "config_flow": true
+} 
