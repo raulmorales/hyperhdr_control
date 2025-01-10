@@ -1,15 +1,7 @@
 {
   "name": "HyperHDR Control",
-  "render_readme": true,
-  "domain": "hyperhdr_control",
-  "documentation": "https://github.com/johnneerdael/hyperhdr_control",
-  "issue_tracker": "https://github.com/johnneerdael/hyperhdr_control/issues",
-  "homeassistant": "2023.8.0",
-  "iot_class": "local_polling",
-  "zip_release": false,
+  "content_in_root": false,
   "filename": "hyperhdr_control-{version}.zip",
   "hide_default_branch": true,
-  "content_in_root": false,
-  "render_readme": true,
-  "logo": "hyperhdr_control-logo.png"
+  "render_readme": true
 } 
