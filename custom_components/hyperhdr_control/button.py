@@ -53,7 +53,7 @@ class HyperHDREffectButton(ButtonEntity):
             manufacturer="HyperHDR",
             name=f"HyperHDR ({self._host})",
             model="HyperHDR LED Controller",
-            sw_version="1.2.0",
+            sw_version="1.3.0",
         )
 
     async def async_press(self) -> None:

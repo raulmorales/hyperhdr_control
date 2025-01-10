@@ -18,6 +18,10 @@ from .const import DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
 
+# Define component names as constants
+COMP_VIDEOGRABBER = "VIDEOGRABBER"
+COMP_LEDDEVICE = "LEDDEVICE"
+
 async def async_setup_entry(
     hass: HomeAssistant,
     entry: ConfigEntry,
@@ -28,8 +32,8 @@ async def async_setup_entry(
     port = entry.data[CONF_PORT]
     
     async_add_entities([
-        HyperHDRSwitch(entry.entry_id, host, port, "VIDEOGRABBER", "USB Capture"),
-        HyperHDRSwitch(entry.entry_id, host, port, "LEDDEVICE", "LED Output")
+        HyperHDRSwitch(entry.entry_id, host, port, COMP_VIDEOGRABBER, "USB Capture"),
+        HyperHDRSwitch(entry.entry_id, host, port, COMP_LEDDEVICE, "LED Output")
     ], True)
 
 class HyperHDRSwitch(SwitchEntity):
@@ -53,7 +57,7 @@ class HyperHDRSwitch(SwitchEntity):
             manufacturer="HyperHDR",
             name=f"HyperHDR ({self._host})",
             model="HyperHDR LED Controller",
-            sw_version="1.2.0",
+            sw_version="1.3.0",
         )
 
     async def async_turn_on(self, **kwargs: Any) -> None:
@@ -77,14 +81,18 @@ class HyperHDRSwitch(SwitchEntity):
         try:
             async with aiohttp.ClientSession() as session:
                 url = f"http://{self._host}:{self._port}/json-rpc"
+                _LOGGER.debug("Sending request to %s: %s", url, json.dumps(request_data))
                 async with async_timeout.timeout(10):
                     async with session.get(url, params={"request": json.dumps(request_data)}) as response:
                         if response.status == 200:
                             self._attr_is_on = state
+                            _LOGGER.debug("Successfully set %s state to %s", self._component, state)
                         else:
-                            _LOGGER.error("Failed to set state: %s", response.status)
+                            _LOGGER.error("Failed to set state for %s: %s", self._component, response.status)
+                            response_text = await response.text()
+                            _LOGGER.error("Response: %s", response_text)
         except (aiohttp.ClientError, TimeoutError) as error:
-            _LOGGER.error("Error setting state: %s", error)
+            _LOGGER.error("Error setting state for %s: %s", self._component, error)
 
     async def async_update(self) -> None:
         """Update the state of the switch."""

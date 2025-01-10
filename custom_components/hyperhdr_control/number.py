@@ -4,6 +4,8 @@ from __future__ import annotations
 import json
 import logging
 from typing import Any
+import asyncio
+from datetime import datetime, timedelta
 
 import aiohttp
 import async_timeout
@@ -17,6 +19,8 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from .const import DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
+
+THROTTLE_DELAY = 1.0  # Delay in seconds between API calls
 
 async def async_setup_entry(
     hass: HomeAssistant,
@@ -46,6 +50,10 @@ class HyperHDRBrightnessNumber(NumberEntity):
         self._attr_native_step = 1
         self._attr_mode = NumberMode.SLIDER
         self._attr_native_unit_of_measurement = PERCENTAGE
+        self._last_update = datetime.min
+        self._pending_value = None
+        self._update_lock = asyncio.Lock()
+        self._update_task = None
 
     @property
     def device_info(self) -> DeviceInfo:
@@ -55,11 +63,38 @@ class HyperHDRBrightnessNumber(NumberEntity):
             manufacturer="HyperHDR",
             name=f"HyperHDR ({self._host})",
             model="HyperHDR LED Controller",
-            sw_version="1.2.0",
+            sw_version="1.3.0",
         )
 
+    async def _delayed_update(self) -> None:
+        """Handle the delayed update of the brightness value."""
+        try:
+            while True:
+                async with self._update_lock:
+                    if self._pending_value is None:
+                        self._update_task = None
+                        return
+                    
+                    value = self._pending_value
+                    self._pending_value = None
+                
+                await self._set_brightness(value)
+                await asyncio.sleep(THROTTLE_DELAY)
+        except Exception as error:
+            _LOGGER.error("Error in delayed update: %s", error)
+            self._update_task = None
+
     async def async_set_native_value(self, value: float) -> None:
-        """Set the brightness value."""
+        """Set the brightness value with throttling."""
+        async with self._update_lock:
+            self._pending_value = value
+            self._attr_native_value = value
+            
+            if self._update_task is None:
+                self._update_task = asyncio.create_task(self._delayed_update())
+
+    async def _set_brightness(self, value: float) -> None:
+        """Send the brightness value to HyperHDR."""
         request_data = {
             "command": "adjustment",
             "adjustment": {
@@ -73,9 +108,7 @@ class HyperHDRBrightnessNumber(NumberEntity):
                 url = f"http://{self._host}:{self._port}/json-rpc"
                 async with async_timeout.timeout(10):
                     async with session.get(url, params={"request": json.dumps(request_data)}) as response:
-                        if response.status == 200:
-                            self._attr_native_value = value
-                        else:
+                        if response.status != 200:
                             _LOGGER.error("Failed to set brightness: %s", response.status)
         except (aiohttp.ClientError, TimeoutError) as error:
             _LOGGER.error("Error setting brightness: %s", error)
