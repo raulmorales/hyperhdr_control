@@ -8,7 +8,7 @@ from homeassistant.helpers import device_registry as dr
 
 from .const import DOMAIN
 
-PLATFORMS: list[Platform] = [Platform.SWITCH, Platform.BUTTON]
+PLATFORMS: list[Platform] = [Platform.SWITCH, Platform.BUTTON, Platform.NUMBER]
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up HyperHDR Control from a config entry."""
@@ -26,7 +26,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         manufacturer="HyperHDR",
         name=f"HyperHDR ({entry.data[CONF_HOST]})",
         model="HyperHDR LED Controller",
-        sw_version="1.0.0",
+        sw_version="1.1.0",
     )
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)

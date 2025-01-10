@@ -1,4 +1,4 @@
-"""Switch platform for HyperHDR Control integration."""
+"""Number platform for HyperHDR Control integration."""
 from __future__ import annotations
 
 import json
@@ -7,9 +7,9 @@ from typing import Any
 
 import aiohttp
 import async_timeout
-from homeassistant.components.switch import SwitchEntity
+from homeassistant.components.number import NumberEntity, NumberMode
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import CONF_HOST, CONF_PORT
+from homeassistant.const import CONF_HOST, CONF_PORT, PERCENTAGE
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
@@ -23,27 +23,29 @@ async def async_setup_entry(
     entry: ConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ) -> None:
-    """Set up the HyperHDR Control switches."""
+    """Set up the HyperHDR Control number entities."""
     host = entry.data[CONF_HOST]
     port = entry.data[CONF_PORT]
     
     async_add_entities([
-        HyperHDRSwitch(entry.entry_id, host, port, "VIDEOGRABBER", "USB Capture"),
-        HyperHDRSwitch(entry.entry_id, host, port, "LEDDEVICE", "LED Output")
+        HyperHDRBrightnessNumber(entry.entry_id, host, port)
     ], True)
 
-class HyperHDRSwitch(SwitchEntity):
-    """Representation of a HyperHDR Control switch."""
+class HyperHDRBrightnessNumber(NumberEntity):
+    """Representation of a HyperHDR brightness control."""
 
-    def __init__(self, entry_id: str, host: str, port: int, component: str, name: str) -> None:
-        """Initialize the switch."""
+    def __init__(self, entry_id: str, host: str, port: int) -> None:
+        """Initialize the number entity."""
         self._entry_id = entry_id
         self._host = host
         self._port = port
-        self._component = component
-        self._attr_name = f"HyperHDR {name}"
-        self._attr_unique_id = f"hyperhdr_{component.lower()}_{host}_{port}"
-        self._attr_is_on = False
+        self._attr_name = "HyperHDR Brightness"
+        self._attr_unique_id = f"hyperhdr_brightness_{host}_{port}"
+        self._attr_native_min_value = 0
+        self._attr_native_max_value = 100
+        self._attr_native_step = 1
+        self._attr_mode = NumberMode.SLIDER
+        self._attr_native_unit_of_measurement = PERCENTAGE
 
     @property
     def device_info(self) -> DeviceInfo:
@@ -56,21 +58,13 @@ class HyperHDRSwitch(SwitchEntity):
             sw_version="1.1.0",
         )
 
-    async def async_turn_on(self, **kwargs: Any) -> None:
-        """Turn the entity on."""
-        await self._set_state(True)
-
-    async def async_turn_off(self, **kwargs: Any) -> None:
-        """Turn the entity off."""
-        await self._set_state(False)
-
-    async def _set_state(self, state: bool) -> None:
-        """Set the state of the component."""
+    async def async_set_native_value(self, value: float) -> None:
+        """Set the brightness value."""
         request_data = {
-            "command": "componentstate",
-            "componentstate": {
-                "component": self._component,
-                "state": state
+            "command": "adjustment",
+            "adjustment": {
+                "classic_config": False,
+                "brightness": int(value)
             }
         }
         
@@ -80,14 +74,14 @@ class HyperHDRSwitch(SwitchEntity):
                 async with async_timeout.timeout(10):
                     async with session.get(url, params={"request": json.dumps(request_data)}) as response:
                         if response.status == 200:
-                            self._attr_is_on = state
+                            self._attr_native_value = value
                         else:
-                            _LOGGER.error("Failed to set state: %s", response.status)
+                            _LOGGER.error("Failed to set brightness: %s", response.status)
         except (aiohttp.ClientError, TimeoutError) as error:
-            _LOGGER.error("Error setting state: %s", error)
+            _LOGGER.error("Error setting brightness: %s", error)
 
     async def async_update(self) -> None:
-        """Update the state of the switch."""
+        """Update the current brightness value."""
         request_data = {
             "command": "serverinfo"
         }
@@ -99,10 +93,7 @@ class HyperHDRSwitch(SwitchEntity):
                     async with session.get(url, params={"request": json.dumps(request_data)}) as response:
                         if response.status == 200:
                             data = await response.json()
-                            components = data.get("info", {}).get("components", [])
-                            for component in components:
-                                if component.get("name") == self._component:
-                                    self._attr_is_on = component.get("enabled", False)
-                                    break
+                            adjustment = data.get("info", {}).get("adjustment", {})
+                            self._attr_native_value = float(adjustment.get("brightness", 100))
         except (aiohttp.ClientError, TimeoutError) as error:
-            _LOGGER.error("Error updating state: %s", error) 
+            _LOGGER.error("Error updating brightness: %s", error) 
