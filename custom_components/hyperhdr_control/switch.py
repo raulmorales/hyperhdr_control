@@ -11,7 +11,10 @@ from homeassistant.components.switch import SwitchEntity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_HOST, CONF_PORT
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
+
+from .const import DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -24,18 +27,30 @@ async def async_setup_entry(
     host = entry.data[CONF_HOST]
     port = entry.data[CONF_PORT]
     
-    async_add_entities([HyperHDRSwitch(host, port)], True)
+    async_add_entities([HyperHDRSwitch(entry.entry_id, host, port)], True)
 
 class HyperHDRSwitch(SwitchEntity):
     """Representation of a HyperHDR Control switch."""
 
-    def __init__(self, host: str, port: int) -> None:
+    def __init__(self, entry_id: str, host: str, port: int) -> None:
         """Initialize the switch."""
+        self._entry_id = entry_id
         self._host = host
         self._port = port
         self._attr_name = "HyperHDR USB Capture"
         self._attr_unique_id = f"hyperhdr_videograbber_{host}_{port}"
         self._attr_is_on = False
+
+    @property
+    def device_info(self) -> DeviceInfo:
+        """Return device information about this HyperHDR instance."""
+        return DeviceInfo(
+            identifiers={(DOMAIN, f"{self._host}:{self._port}")},
+            manufacturer="HyperHDR",
+            name=f"HyperHDR ({self._host})",
+            model="HyperHDR LED Controller",
+            sw_version="1.0.0",
+        )
 
     async def async_turn_on(self, **kwargs: Any) -> None:
         """Turn the entity on."""
