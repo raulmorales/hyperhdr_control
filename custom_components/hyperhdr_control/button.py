@@ -53,7 +53,7 @@ class HyperHDREffectButton(ButtonEntity):
             manufacturer="HyperHDR",
             name=f"HyperHDR ({self._host})",
             model="HyperHDR LED Controller",
-            sw_version="1.3.0",
+            sw_version="1.3.1",
         )
 
     async def async_press(self) -> None:
@@ -71,9 +71,14 @@ class HyperHDREffectButton(ButtonEntity):
         try:
             async with aiohttp.ClientSession() as session:
                 url = f"http://{self._host}:{self._port}/json-rpc"
+                params = {"request": json.dumps(request_data, separators=(',', ':'))}
+                _LOGGER.debug("Sending request to %s with params: %s", url, params)
+                
                 async with async_timeout.timeout(10):
-                    async with session.get(url, params={"request": json.dumps(request_data)}) as response:
+                    async with session.get(url, params=params) as response:
                         if response.status != 200:
                             _LOGGER.error("Failed to activate effect: %s", response.status)
+                            response_text = await response.text()
+                            _LOGGER.error("Response: %s", response_text)
         except (aiohttp.ClientError, TimeoutError) as error:
             _LOGGER.error("Error activating effect: %s", error) 

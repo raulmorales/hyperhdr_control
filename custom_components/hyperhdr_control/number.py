@@ -63,7 +63,7 @@ class HyperHDRBrightnessNumber(NumberEntity):
             manufacturer="HyperHDR",
             name=f"HyperHDR ({self._host})",
             model="HyperHDR LED Controller",
-            sw_version="1.3.0",
+            sw_version="1.3.1",
         )
 
     async def _delayed_update(self) -> None:
@@ -106,10 +106,15 @@ class HyperHDRBrightnessNumber(NumberEntity):
         try:
             async with aiohttp.ClientSession() as session:
                 url = f"http://{self._host}:{self._port}/json-rpc"
+                params = {"request": json.dumps(request_data, separators=(',', ':'))}
+                _LOGGER.debug("Sending brightness request to %s with params: %s", url, params)
+                
                 async with async_timeout.timeout(10):
-                    async with session.get(url, params={"request": json.dumps(request_data)}) as response:
+                    async with session.get(url, params=params) as response:
                         if response.status != 200:
                             _LOGGER.error("Failed to set brightness: %s", response.status)
+                            response_text = await response.text()
+                            _LOGGER.error("Response: %s", response_text)
         except (aiohttp.ClientError, TimeoutError) as error:
             _LOGGER.error("Error setting brightness: %s", error)
 
@@ -122,8 +127,10 @@ class HyperHDRBrightnessNumber(NumberEntity):
         try:
             async with aiohttp.ClientSession() as session:
                 url = f"http://{self._host}:{self._port}/json-rpc"
+                params = {"request": json.dumps(request_data, separators=(',', ':'))}
+                
                 async with async_timeout.timeout(10):
-                    async with session.get(url, params={"request": json.dumps(request_data)}) as response:
+                    async with session.get(url, params=params) as response:
                         if response.status == 200:
                             data = await response.json()
                             adjustment = data.get("info", {}).get("adjustment", {})

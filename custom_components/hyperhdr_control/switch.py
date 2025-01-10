@@ -4,6 +4,7 @@ from __future__ import annotations
 import json
 import logging
 from typing import Any
+from urllib.parse import urlencode
 
 import aiohttp
 import async_timeout
@@ -57,7 +58,7 @@ class HyperHDRSwitch(SwitchEntity):
             manufacturer="HyperHDR",
             name=f"HyperHDR ({self._host})",
             model="HyperHDR LED Controller",
-            sw_version="1.3.0",
+            sw_version="1.3.1",
         )
 
     async def async_turn_on(self, **kwargs: Any) -> None:
@@ -81,9 +82,11 @@ class HyperHDRSwitch(SwitchEntity):
         try:
             async with aiohttp.ClientSession() as session:
                 url = f"http://{self._host}:{self._port}/json-rpc"
-                _LOGGER.debug("Sending request to %s: %s", url, json.dumps(request_data))
+                params = {"request": json.dumps(request_data, separators=(',', ':'))}
+                _LOGGER.debug("Sending request to %s with params: %s", url, params)
+                
                 async with async_timeout.timeout(10):
-                    async with session.get(url, params={"request": json.dumps(request_data)}) as response:
+                    async with session.get(url, params=params) as response:
                         if response.status == 200:
                             self._attr_is_on = state
                             _LOGGER.debug("Successfully set %s state to %s", self._component, state)
@@ -103,8 +106,10 @@ class HyperHDRSwitch(SwitchEntity):
         try:
             async with aiohttp.ClientSession() as session:
                 url = f"http://{self._host}:{self._port}/json-rpc"
+                params = {"request": json.dumps(request_data, separators=(',', ':'))}
+                
                 async with async_timeout.timeout(10):
-                    async with session.get(url, params={"request": json.dumps(request_data)}) as response:
+                    async with session.get(url, params=params) as response:
                         if response.status == 200:
                             data = await response.json()
                             components = data.get("info", {}).get("components", [])
