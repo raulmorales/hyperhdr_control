@@ -1,11 +1,3 @@
-Logger: homeassistant.helpers.frame
-Source: helpers/frame.py:324
-First occurred: 17:51:14 (2 occurrences)
-Last logged: 17:51:17
-
-Detected that custom integration 'hyperhdr_control' calls async_forward_entry_setup for integration, hyperhdr_control with title: Boardgame Room Ambilight Controls and entry_id: 01JH76177VYW6KRHK4HF38RXDA, which is deprecated, await async_forward_entry_setups instead at custom_components/hyperhdr_control/__init__.py, line 40: hass.async_create_task(. This will stop working in Home Assistant 2025.6, please report it to the author of the 'hyperhdr_control' custom integration
-Detected that custom integration 'govee_lan' calls async_forward_entry_setup for integration, govee_lan with title: Govee Boardgame Room LAN Control and entry_id: 01JH8QA1X1219F5NX1AVFYW8HF, which is deprecated, await async_forward_entry_setups instead at custom_components/govee_lan/__init__.py, line 32: hass.async_create_task(. This will stop working in Home Assistant 2025.6, please create a bug report at https://github.com/wez/govee-lan-hass/issues# HyperHDR Control for Home Assistant
-
 A Home Assistant integration to control HyperHDR LED controller. This integration provides switches to control the LED and USB capture devices, a brightness slider, and buttons to activate various effects.
 
 ## Features
