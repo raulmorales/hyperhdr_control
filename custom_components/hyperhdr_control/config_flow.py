@@ -78,7 +78,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         """Test the connection to HyperHDR."""
         try:
             async with aiohttp.ClientSession() as session:
-                url = f"http://{self._host}:{self._port}/json-rpc"
+                url = f"https://{self._host}:{self._port}/json-rpc"
                 test_request = {
                     "command": "serverinfo"
                 }
